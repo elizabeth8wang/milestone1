@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bCourses Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #1a2740; --gold: #e07b00; --link: #0770a3;
+  --text: #2d3b45; --muted: #6b7780; --border: #d6d6d6;
+  --bg: #f4f5f7; --red: #e53935; --amber: #e53935;
+  --todo-w: 300px;
+}
+body { font-family: 'Lato', system-ui, -apple-system, sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; font-size: 14px; color: var(--text); }
+
+/* ─── LEFT NAV ─── */
+.sidebar { width: 68px; background: var(--navy); display: flex; flex-direction: column; align-items: center; flex-shrink: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
+.sidebar-logo { width: 68px; height: 64px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-item { width: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 4px 9px; cursor: pointer; color: #b5bfc8; text-decoration: none; position: relative; gap: 4px; transition: background 0.15s; border-left: 3px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #dde2e6; }
+.nav-item.active { background: rgba(255,255,255,0.11); color: #fff; border-left-color: var(--gold); }
+.nav-item svg { width: 22px; height: 22px; fill: currentColor; flex-shrink: 0; }
+.nav-label { font-size: 9px; text-align: center; line-height: 1.25; color: inherit; max-width: 58px; }
+.nav-badge { position: absolute; top: 7px; right: 7px; background: #d94f0a; color: #fff; font-size: 9px; font-weight: 700; border-radius: 10px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+
+/* ─── APP SHELL ─── */
+.app { flex: 1; display: flex; overflow: hidden; min-width: 0; }
+.content { flex: 1; overflow-y: auto; padding: 26px 24px 48px; min-width: 0; }
+.content::-webkit-scrollbar { width: 6px; }
+.content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+.content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.content-header h1 { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.toggle-all-btn { background: none; border: 1px solid var(--border); border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--link); padding: 5px 12px; font-family: inherit; white-space: nowrap; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.toggle-all-btn:hover { background: #edf2f7; border-color: #b0c8de; }
+.toggle-all-btn.open { background: var(--link); border-color: var(--link); color: #fff; }
+.toggle-all-btn.open:hover { background: #055f8a; border-color: #055f8a; }
+.kebab-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; padding: 4px 8px; border-radius: 4px; line-height: 1; }
+.kebab-btn:hover { background: #eee; }
+
+/* ─── COURSE GRID ─── */
+.course-grid { display: grid; grid-template-columns: repeat(3, 300px); gap: 26px; align-items: start; }
+.card-container { background: #fff; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: box-shadow 0.15s; }
+.card-container:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.11); }
+.card-banner { height: 140px; position: relative; cursor: pointer; overflow: hidden; }
+.card-banner-kebab { position: absolute; top: 7px; right: 7px; background: rgba(0,0,0,0.42); border: none; border-radius: 4px; color: #fff; font-size: 14px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+.card-banner-kebab:hover { background: rgba(0,0,0,0.65); }
+.card-body { padding: 14px 16px 12px; cursor: pointer; }
+.card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; }
+.card-title a { text-decoration: none; }
+.card-title a:hover { text-decoration: underline; }
+.card-code { font-size: 13px; color: var(--muted); margin-bottom: 2px; font-weight: 400; }
+.card-term { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.card-icons { display: flex; align-items: center; gap: 18px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+.card-icon-btn { background: none; border: none; cursor: pointer; color: #8d9aaa; display: flex; align-items: center; position: relative; padding: 3px; }
+.card-icon-btn svg { width: 19px; height: 19px; fill: currentColor; }
+.card-icon-btn:hover { color: var(--text); }
+.icon-badge { position: absolute; top: -4px; left: 11px; background: #2d3b45; color: #fff; font-size: 9px; font-weight: 700; border-radius: 10px; min-width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+.card-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 12px; font-size: 11.5px; color: var(--text); background: #f6f8fb; border-top: 1px solid #edf0f3; cursor: pointer; user-select: none; }
+.card-toggle-row:hover { background: #edf2f7; }
+.card-toggle-chevron { display: flex; align-items: center; transition: transform 0.25s ease; }
+.card-toggle-chevron svg { width: 13px; height: 13px; fill: var(--link); }
+.card-container.collapsed .card-toggle-chevron { transform: rotate(-90deg); }
+.assignment-list { overflow: hidden; max-height: 800px; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1); }
+.card-container.collapsed .assignment-list { max-height: 0; }
+.assignment-list-inner { border-top: 2px solid #edf0f3; background: #fafbfc; }
+.assignment-list-header { padding: 6px 12px 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.4px; color: #8d9aaa; }
+.assignment-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #f0f2f4; transition: background 0.1s; }
+.assignment-row:last-child { border-bottom: none; }
+.assignment-row:hover { background: #f2f4f7; }
+.assignment-row.done .arow-name { text-decoration: line-through; color: var(--muted); opacity: 0.65; }
+.arow-check { appearance: none; -webkit-appearance: none; width: 13px; height: 13px; border: 1.5px solid #c0c8d0; border-radius: 3px; cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.15s; background: #fff; }
+.arow-check:checked { background-color: var(--link); border-color: var(--link); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='white' d='M5.5 10.5L2 7l1.1-1.1 2.4 2.4 4.9-4.9L11.5 4.5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; background-size: 10px; }
+.arow-info { flex: 1; min-width: 0; }
+.arow-name { font-size: 12px; color: var(--text); line-height: 1.35; cursor: text; border-radius: 2px; }
+.arow-name:hover { background: rgba(7,112,163,0.05); }
+.inline-edit { font-size: 12px; font-family: inherit; color: var(--text); border: 1px solid var(--link); border-radius: 3px; padding: 1px 4px; outline: none; width: 100%; box-shadow: 0 0 0 2px rgba(7,112,163,0.12); }
+.arow-due { font-size: 10.5px; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.arow-due.d-overdue { color: var(--red); font-weight: 600; }
+.arow-due.d-today   { color: var(--amber); font-weight: 600; }
+.arow-due.d-future  { color: var(--muted); }
+.arow-due.d-none    { color: #b0bac4; }
+.due-badge { display: inline-flex; align-items: center; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+.due-badge.overdue { background: #fde8e8; color: var(--red); }
+.due-badge.today   { background: #fdeaea; color: var(--amber); }
+.no-assignments { padding: 10px 12px; font-size: 11.5px; color: #b0bac4; font-style: italic; }
+
+/* ─── RIGHT SIDEBAR ─── */
+.right-sidebar { width: var(--todo-w); flex-shrink: 0; background: #fff; border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-top { padding: 14px 14px 0; flex-shrink: 0; }
+.todo-heading-row { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px solid #edf0f3; }
+.todo-heading { font-size: 18px; font-weight: 700; color: var(--text); }
+
+/* Export split button */
+.export-wrap { position: relative; display: flex; }
+.export-btn { display: flex; align-items: center; gap: 0; background: none; border: 1.5px solid #b8d0e8; border-radius: 20px; overflow: hidden; cursor: pointer; font-family: inherit; transition: background 0.15s, border-color 0.15s; }
+.export-btn:hover { background: #eef4fa; border-color: #8ab8d8; }
+.export-label { font-size: 13px; font-weight: 500; color: var(--link); padding: 6px 10px 6px 14px; background: none; border: none; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.export-chevron { display: flex; align-items: center; justify-content: center; width: 26px; border-left: 1.5px solid #b8d0e8; padding: 6px 0; cursor: pointer; background: none; border-top: none; border-right: none; border-bottom: none; color: var(--link); }
+.export-chevron svg { width: 16px; height: 16px; fill: currentColor; transition: transform 0.25s ease; }
+.export-wrap.open .export-chevron svg { transform: rotate(180deg); }
+.export-dropdown { position: absolute; top: calc(100% + 5px); right: 0; z-index: 300; background: #fff; border: 1px solid #dde4ec; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.13); min-width: 175px; overflow: hidden; display: none; }
+.export-wrap.open .export-dropdown { display: block; }
+.export-option { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; font-size: 13px; color: var(--text); transition: background 0.1s; white-space: nowrap; }
+.export-option:hover { background: #f0f5fa; }
+.export-option svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ─── PROGRESS METER ─── */
+.progress-section { padding: 12px 14px 10px; border-bottom: 1px solid #edf0f3; }
+.progress-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.progress-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.3px; }
+.progress-pct { font-size: 13px; font-weight: 700; color: var(--text); }
+.progress-track { height: 6px; background: #e8edf2; border-radius: 10px; overflow: hidden; margin-bottom: 5px; }
+.progress-fill { height: 100%; background: var(--link); border-radius: 10px; transition: width 0.4s ease; }
+.progress-fill.complete { background: #2ecc71; }
+.progress-sub { font-size: 11px; color: var(--muted); }
+
+/* ─── NEW TASK BUTTON ─── */
+.new-task-btn { display: flex; align-items: center; gap: 6px; width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--link); padding: 9px 14px; border-bottom: 1px solid #edf0f3; transition: background 0.12s; }
+.new-task-btn:hover { background: #f0f5fa; }
+.new-task-btn svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+
+.todo-scroll { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+.todo-scroll::-webkit-scrollbar { width: 4px; }
+.todo-scroll::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+/* ─── TODO SECTIONS (collapsible) ─── */
+.todo-section-header { display: flex; align-items: center; gap: 6px; padding: 10px 12px 5px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.2px; color: var(--muted); cursor: pointer; user-select: none; transition: background 0.12s; }
+.todo-section-header:hover { background: #f6f8fb; }
+.todo-section-header.lbl-overdue { color: var(--red); }
+.todo-section-header.lbl-today   { color: var(--amber); }
+.section-chevron { display: flex; align-items: center; transition: transform 0.22s ease; flex-shrink: 0; }
+.section-chevron svg { width: 14px; height: 14px; fill: currentColor; }
+.todo-section.collapsed .section-chevron { transform: rotate(-90deg); }
+.todo-section-body { overflow: hidden; max-height: 2000px; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1); }
+.todo-section.collapsed .todo-section-body { max-height: 0; }
+
+/* ─── TODO ITEM ─── */
+.todo-item { border-bottom: 1px solid #f0f2f4; transition: opacity 0.25s; position: relative; }
+.todo-item.done-animate { opacity: 0.4; }
+.todo-item.done-moved .todo-title { text-decoration: line-through; color: var(--muted); }
+.todo-item.done-moved { opacity: 0.6; }
+.todo-item[draggable="true"] { cursor: grab; }
+.todo-item.dragging { opacity: 0.35; cursor: grabbing; }
+.todo-item.drag-over { outline: 2px dashed var(--link); outline-offset: -2px; background: #f0f6fc; }
+
+.todo-main { display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 0 10px; }
+
+/* Square checkbox */
+.todo-check { appearance: none; -webkit-appearance: none; width: 15px; height: 15px; border: 1.5px solid #c0c8d0; border-radius: 3px; cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.15s; background: #fff; }
+.todo-check:checked { background-color: var(--link); border-color: var(--link); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='white' d='M5.5 10.5L2 7l1.1-1.1 2.4 2.4 4.9-4.9L11.5 4.5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; background-size: 10px; }
+
+.todo-content { flex: 1; min-width: 0; padding-bottom: 8px; }
+.todo-title { font-size: 13px; color: var(--text); font-weight: 500; line-height: 1.35; border-radius: 2px; padding: 1px 2px; margin: 0 -2px; }
+.todo-title-link { color: inherit; text-decoration: none; display: block; }
+.todo-title-link:hover { text-decoration: underline; color: var(--link); }
+.todo-item.done-moved .todo-title-link { color: var(--muted); pointer-events: none; }
+.title-edit-input { font-size: 13px; font-family: inherit; font-weight: 500; color: var(--text); border: 1px solid var(--link); border-radius: 3px; padding: 1px 4px; outline: none; width: 100%; box-shadow: 0 0 0 2px rgba(7,112,163,0.15); }
+
+.todo-desc-row { display: flex; align-items: flex-start; gap: 6px; margin-top: 5px; }
+.desc-lines-icon { flex-shrink: 0; margin-top: 4px; color: #c0c8d0; }
+.desc-lines-icon svg { width: 13px; height: 13px; fill: currentColor; display: block; }
+.todo-desc-input { flex: 1; border: none; outline: none; resize: none; font-size: 12px; font-family: inherit; color: var(--text); background: transparent; line-height: 1.4; min-height: 18px; overflow: hidden; height: auto; }
+.todo-desc-input::placeholder { color: #b8c1ca; }
+
+/* Due date (editable) */
+.todo-due-wrap { margin-top: 6px; display: inline-block; }
+.todo-due-text { font-size: 11.5px; color: var(--muted); cursor: pointer; padding: 1px 3px; border-radius: 3px; display: inline-block; }
+.todo-due-text:hover { background: #f0f4f8; }
+.todo-due-text.d-overdue { color: var(--red); font-weight: 600; }
+.todo-due-text.d-today   { color: var(--amber); font-weight: 600; }
+.due-date-input { font-size: 11.5px; font-family: inherit; border: 1px solid var(--link); border-radius: 3px; padding: 1px 4px; outline: none; color: var(--text); box-shadow: 0 0 0 2px rgba(7,112,163,0.12); }
+
+/* Chip */
+.todo-chip-wrap { position: relative; margin-top: 5px; }
+.course-chip { display: inline-block; font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 10px; color: #fff; white-space: nowrap; cursor: pointer; transition: opacity 0.15s; }
+.course-chip:hover { opacity: 0.85; }
+
+/* Chip custom dropdown — position:fixed set by JS */
+.chip-dropdown { position: fixed; z-index: 9999; background: #fff; border: 1px solid #dde4ec; border-radius: 9px; box-shadow: 0 8px 28px rgba(0,0,0,0.16); min-width: 175px; overflow: hidden; }
+.chip-option { display: flex; align-items: center; gap: 9px; padding: 8px 13px; cursor: pointer; font-size: 12.5px; color: var(--text); transition: background 0.1s; }
+.chip-option:hover { background: #f0f5fa; }
+.chip-option.selected { background: #eef3f8; font-weight: 600; }
+.chip-option-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.chip-option-check { margin-left: auto; color: var(--link); font-size: 12px; font-weight: 700; }
+.chip-option-divider { height: 1px; background: #edf0f3; margin: 3px 0; }
+.chip-custom-input-wrap { padding: 7px 11px 9px; }
+.chip-custom-input { width: 100%; font-size: 12px; font-family: inherit; border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; outline: none; color: var(--text); }
+.chip-custom-input:focus { border-color: var(--link); box-shadow: 0 0 0 2px rgba(7,112,163,0.1); }
+.chip-custom-input::placeholder { color: #b8c1ca; }
+
+/* Actions column */
+.todo-actions { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; padding-top: 1px; }
+.todo-trash { background: none; border: none; cursor: pointer; color: #c8d0d8; padding: 2px; display: flex; align-items: center; border-radius: 3px; transition: color 0.15s; }
+.todo-trash:hover { color: var(--red); background: #fde8e8; }
+.todo-trash svg { width: 13px; height: 13px; fill: currentColor; }
+.todo-chevron { background: none; border: none; cursor: pointer; color: #c8d0d8; padding: 2px; display: flex; align-items: center; border-radius: 3px; transition: transform 0.22s ease, color 0.15s; }
+.todo-chevron svg { width: 13px; height: 13px; fill: currentColor; }
+.todo-chevron:hover { color: var(--link); }
+.todo-item.subtasks-open .todo-chevron { transform: rotate(90deg); color: var(--link); }
+
+/* ─── INLINE SUBTASKS ─── */
+.todo-desc-area { margin-top: 5px; }
+.subtasks-inline { margin-top: 4px; padding-left: 19px; }
+.subtasks-list { margin-bottom: 2px; }
+.subtask-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.subtask-row.done .subtask-input { text-decoration: line-through; color: var(--muted); opacity: 0.65; }
+.subtask-check { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; border: 1.5px solid #c0c8d0; border-radius: 3px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; background: #fff; }
+.subtask-check:checked { background-color: var(--link); border-color: var(--link); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='white' d='M5.5 10.5L2 7l1.1-1.1 2.4 2.4 4.9-4.9L11.5 4.5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; background-size: 9px; }
+.subtask-input { flex: 1; font-size: 12px; color: var(--text); border: none; border-bottom: 1px solid #e4e8ed; outline: none; padding: 2px 0; font-family: inherit; background: transparent; min-width: 0; }
+.subtask-input:focus { border-bottom-color: var(--link); }
+.subtask-input::placeholder { color: #b8c1ca; }
+.subtask-delete { background: none; border: none; cursor: pointer; color: #c8d0d8; padding: 2px; display: flex; align-items: center; flex-shrink: 0; border-radius: 3px; transition: color 0.15s; opacity: 0; }
+.subtask-row:hover .subtask-delete { opacity: 1; }
+.subtask-delete:hover { color: var(--red); }
+.subtask-delete svg { width: 11px; height: 11px; fill: currentColor; }
+.add-subtask-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; font-size: 11.5px; color: var(--link); padding: 2px 0; font-family: inherit; }
+.add-subtask-btn:hover { text-decoration: underline; }
+.add-subtask-btn svg { width: 11px; height: 11px; fill: currentColor; }
+
+/* ─── COMPLETED SECTION ─── */
+.completed-section { border-top: 2px solid #edf0f3; margin-top: 4px; }
+.completed-header { display: flex; align-items: center; gap: 7px; padding: 10px 12px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 600; color: var(--muted); transition: background 0.12s; }
+.completed-header:hover { background: #f6f8fb; }
+.completed-icon { display: flex; align-items: center; transition: transform 0.22s ease; }
+.completed-icon svg { width: 13px; height: 13px; fill: var(--muted); }
+.completed-section.open .completed-icon { transform: rotate(90deg); }
+.completed-list { overflow: hidden; max-height: 0; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1); }
+.completed-section.open .completed-list { max-height: 2000px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 40 40" width="34" height="34">
+      <circle cx="20" cy="20" r="19" fill="#e07b00"/>
+      <text x="20" y="27" text-anchor="middle" font-family="Georgia,serif" font-size="21" font-weight="700" fill="#fff">C</text>
+    </svg>
+  </div>
+  <a href="#" class="nav-item active">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+    <span class="nav-label">Account</span>
+  </a>
+  <a href="#" class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm0 10h8v8H3zM13 3h8v8h-8zm0 10h8v8h-8z"/></svg>
+    <span class="nav-label">Dashboard</span>
+  </a>
+  <a href="#" class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+    <span class="nav-label">Courses</span>
+  </a>
+  <a href="#" class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    <span class="nav-label">Groups</span>
+  </a>
+  <a href="#" class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+    <span class="nav-label">Calendar</span>
+  </a>
+  <a href="#" class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+    <span class="nav-label">Inbox</span>
+  </a>
+  <a href="#" class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    <span class="nav-label">History</span>
+  </a>
+  <a href="#" class="nav-item" style="margin-top:auto;">
+    <span class="nav-badge">10</span>
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+    <span class="nav-label">Help</span>
+  </a>
+</nav>
+
+<div class="app">
+  <main class="content">
+    <div class="content-header">
+      <h1>Dashboard</h1>
+      <div class="header-actions">
+        <button class="toggle-all-btn" id="toggleAllBtn" onclick="toggleAllAssignments()">Show assignments</button>
+        <button class="kebab-btn">&#8942;</button>
+      </div>
+    </div>
+    <div class="course-grid" id="courseGrid"></div>
+  </main>
+
+  <aside class="right-sidebar">
+    <div class="sidebar-top">
+      <div class="todo-heading-row">
+        <div class="todo-heading">To Do</div>
+        <div class="export-wrap" id="exportWrap">
+          <div class="export-btn">
+            <button class="export-label" onclick="exportCalendar('google')">Export</button>
+            <button class="export-chevron" onclick="toggleExportDropdown(event)">
+              <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
+          <div class="export-dropdown" id="exportDropdown">
+            <div class="export-option" onclick="exportCalendar('google')">
+              <svg viewBox="0 0 24 24" style="fill:#4285f4"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" style="fill:#34a853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" style="fill:#fbbc05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" style="fill:#ea4335"/></svg>
+              Google Calendar
+            </div>
+            <div class="export-option" onclick="exportCalendar('apple')">
+              <svg viewBox="0 0 24 24" style="fill:#555"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              Apple Calendar
+            </div>
+            <div class="export-option" onclick="exportCalendar('notion')">
+              <svg viewBox="0 0 24 24" style="fill:#000"><path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z"/></svg>
+              Notion Calendar
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="progress-section">
+        <div class="progress-top">
+          <span class="progress-title">Today's progress</span>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-sub" id="progressSub">0 of 0 tasks completed</div>
+      </div>
+    </div>
+
+    <button class="new-task-btn" onclick="createInlineTask()">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      New task
+    </button>
+
+    <div class="todo-scroll">
+      <div id="todoActive"></div>
+      <div class="completed-section" id="completedSection">
+        <div class="completed-header" onclick="toggleCompleted()">
+          <span class="completed-icon"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5v10z"/></svg></span>
+          <span>Completed (<span id="completedCount">0</span>)</span>
+        </div>
+        <div class="completed-list" id="completedList"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const TODAY     = new Date('2026-03-05T00:00:00');
+const TODAY_END = new Date('2026-03-05T23:59:59');
+let _customIdCounter = 1000;
+
+const BASE_URL = 'https://bcourses.berkeley.edu/courses/1552546/assignments/9051019';
+const courses = [
+  { id:'ux-ai',     title:'UX for AI (Spring 2026)',             shortTitle:'UX for AI',         code:'INFO 290-LEC-007',  term:'Spring 2026', color:'#2e6da4', titleColor:'#0770a3', badges:{announce:4},
+    assignments:[
+      {id:'a1', name:'Milestone 1, Part I of II: Demo and Critique',        due: new Date('2026-03-05T23:59:00'), url: BASE_URL},
+      {id:'a2', name:'Milestone 1, Part II of II: Iterate and Submit Deck', due: new Date('2026-03-08T23:59:00'), url: BASE_URL},
+    ]},
+  { id:'social',    title:'Social Issues of Information',         shortTitle:'Social Issues',      code:'INFO 203 Spr26',    term:'Spring 2026', color:'#6b7c52', titleColor:'#4a5838', badges:{announce:5},
+    assignments:[
+      {id:'b1', name:'Unit 7 writing prompt', due: new Date('2026-03-10T23:59:00'), url: BASE_URL},
+    ]},
+  { id:'special',   title:'Special Topics in Information (Spri...', shortTitle:'Special Topics',  code:'INFO 290',           term:'Spring 2026', color:'#2d4a52', titleColor:'#555f61', badges:{},
+    assignments:[
+      {id:'s1', name:'Reading Week 7',           due:null, url: BASE_URL},
+      {id:'s2', name:'Design Assignment Week 7', due:null, url: BASE_URL},
+      {id:'s3', name:'Sketch Week 7',            due:null, url: BASE_URL},
+    ]},
+  { id:'interface', title:'Interface Aesthetics (Spring 2026)',   shortTitle:'Interface Aesth.',  code:'INFO C265-LEC-001', term:'Spring 2026', color:'#4a6fa5', titleColor:'#0770a3', badges:{announce:3},
+    assignments:[
+      {id:'c1', name:'Type 2', due: new Date('2026-03-05T12:00:00'), url: BASE_URL},
+    ]},
+  { id:'infolaw',   title:'Information Law and Policy (Sprin...', shortTitle:'Info Law & Policy', code:'INFO 205-LEC-001',  term:'Spring 2026', color:'#b94a2c', titleColor:'#b94a2c', badges:{announce:8},
+    assignments:[]},
+];
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function dueStatus(due) {
+  if (!due) return 'none';
+  if (due < TODAY)      return 'overdue';
+  if (due <= TODAY_END) return 'today';
+  return 'future';
+}
+function fmtDue(due) {
+  if (!due) return '';
+  const ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let h = due.getHours(), min = due.getMinutes();
+  const ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12;
+  const minStr = min > 0 ? ':' + String(min).padStart(2,'0') : '';
+  return `${ms[due.getMonth()]} ${due.getDate()}, ${h}${minStr}${ap}`;
+}
+function fmtDateVal(due) {
+  if (!due) return '';
+  return due.toISOString().slice(0,10);
+}
+function sortAssignments(list) {
+  return [...list].sort((a,b)=>{ if(!a.due&&!b.due)return 0; if(!a.due)return 1; if(!b.due)return -1; return a.due-b.due; });
+}
+const SVG = {
+  chevDown:  `<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>`,
+  chevRight: `<svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5v10z"/></svg>`,
+  plus:      `<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`,
+  trash:     `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`,
+  announce:  `<svg viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM19.2 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg>`,
+  pencil:    `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`,
+  chat:      `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>`,
+  folder:    `<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`,
+  lines:     `<svg viewBox="0 0 24 24"><path d="M3 13h18v-2H3v2zm0 4h18v-2H3v2zm0-8h18V7H3v2z"/></svg>`,
+};
+
+// ─── PROGRESS METER ───────────────────────────────────────────────────────────
+function updateProgressMeter() {
+  const allToday = document.querySelectorAll('.todo-item[data-due-status="today"]');
+  const doneToday = document.querySelectorAll('#completedList .todo-item[data-due-status="today"]');
+  const total = allToday.length, done = doneToday.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressPct').textContent = pct + '%';
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-fill' + (pct === 100 ? ' complete' : '');
+  document.getElementById('progressSub').textContent = `${done} of ${total} task${total !== 1 ? 's' : ''} completed today`;
+}
+
+// ─── RENDER COURSE GRID ───────────────────────────────────────────────────────
+function renderCourseGrid() {
+  const grid = document.getElementById('courseGrid');
+  grid.innerHTML = courses.map(c => {
+    const sorted = sortAssignments(c.assignments);
+    const cnt = sorted.length;
+    const label = cnt === 0 ? 'No upcoming assignments' : `${cnt} upcoming assignment${cnt!==1?'s':''}`;
+    const rows = cnt === 0
+      ? `<div class="no-assignments">No upcoming assignments</div>`
+      : sorted.map(a => {
+          const st = dueStatus(a.due);
+          const badge = st==='overdue' ? `<span class="due-badge overdue">Overdue</span>`
+                      : st==='today'   ? `<span class="due-badge today">Today</span>` : '';
+          return `<div class="assignment-row" id="card-row-${a.id}" data-aid="${a.id}">
+              <input type="checkbox" class="arow-check" id="card-check-${a.id}" onclick="toggleCardCheck(event,'${a.id}')">
+              <div class="arow-info">
+                <div class="arow-name" ondblclick="editCardTitle(event,this,'${a.id}')">${a.name}</div>
+                <div class="arow-due d-${st}">${fmtDue(a.due)||'No due date'}${badge}</div>
+              </div>
+            </div>`;
+        }).join('');
+    const ann = c.badges.announce
+      ? `<button class="card-icon-btn">${SVG.announce}<span class="icon-badge">${c.badges.announce}</span></button>`
+      : `<button class="card-icon-btn">${SVG.announce}</button>`;
+    return `<div class="card-container" id="card-${c.id}">
+        <div class="card-banner" style="background:${c.color};" onclick="toggleCard('${c.id}')">
+          <button class="card-banner-kebab" onclick="event.stopPropagation()">&#8942;</button>
+        </div>
+        <div class="card-body" onclick="toggleCard('${c.id}')">
+          <div class="card-title"><a href="#" style="color:${c.titleColor};" onclick="event.preventDefault()">${c.title}</a></div>
+          <div class="card-code">${c.code}</div>
+          <div class="card-term">${c.term}</div>
+          <div class="card-icons" onclick="event.stopPropagation()">${ann}
+            <button class="card-icon-btn">${SVG.pencil}</button>
+            <button class="card-icon-btn">${SVG.chat}</button>
+            <button class="card-icon-btn">${SVG.folder}</button>
+          </div>
+        </div>
+        <div class="card-toggle-row" onclick="toggleCard('${c.id}')">
+          <span id="card-toggle-label-${c.id}">${label}</span>
+          <span class="card-toggle-chevron">${SVG.chevDown}</span>
+        </div>
+        <div class="assignment-list">
+          <div class="assignment-list-inner" id="card-list-${c.id}">
+            ${rows}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── RENDER TODO LIST ─────────────────────────────────────────────────────────
+function renderTodoList() {
+  const all = [];
+  courses.forEach(c => c.assignments.forEach(a => all.push({...a, course:c})));
+  all.sort((x,y)=>{
+    const sx=dueStatus(x.due),sy=dueStatus(y.due);
+    if(sx==='overdue'&&sy!=='overdue')return -1; if(sy==='overdue'&&sx!=='overdue')return 1;
+    if(!x.due&&!y.due)return 0; if(!x.due)return 1; if(!y.due)return -1; return x.due-y.due;
+  });
+  const overdue  = all.filter(a=>dueStatus(a.due)==='overdue');
+  const today    = all.filter(a=>dueStatus(a.due)==='today');
+  const upcoming = all.filter(a=>dueStatus(a.due)==='future');
+  const container = document.getElementById('todoActive');
+  container.innerHTML = '';
+  if(overdue.length)  container.appendChild(buildSection('overdue', 'Overdue', overdue));
+  if(today.length)    container.appendChild(buildSection('today', 'Due Today', today));
+  if(upcoming.length) container.appendChild(buildSection('future', 'Upcoming', upcoming));
+  window._todoOrder = all.map(a=>a.id);
+  updateProgressMeter();
+}
+
+function buildSection(status, label, items) {
+  const div = document.createElement('div');
+  div.className = 'todo-section';
+  div.id = 'sect-' + status;
+  div.dataset.status = status;
+  const hdrClass = status==='overdue' ? ' lbl-overdue' : status==='today' ? ' lbl-today' : '';
+  div.innerHTML = `<div class="todo-section-header${hdrClass}" onclick="toggleSection('${status}')"><span class="section-chevron">${SVG.chevDown}</span>${label}</div><div class="todo-section-body" id="sect-body-${status}"></div>`;
+  const body = div.querySelector('.todo-section-body');
+  items.forEach(a => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = buildTodoItem(a);
+    body.appendChild(tmp.firstElementChild);
+  });
+  return div;
+}
+
+function toggleSection(status) {
+  const sect = document.getElementById('sect-' + status);
+  if(sect) sect.classList.toggle('collapsed');
+}
+
+function buildTodoItem(a) {
+  const st      = dueStatus(a.due);
+  const dueStr  = fmtDue(a.due);
+  const dueClass = st==='overdue'?'d-overdue':st==='today'?'d-today':'';
+  const dueEl   = dueStr
+    ? `<div class="todo-due-wrap"><span class="todo-due-text ${dueClass}" data-due-ms="${a.due?a.due.getTime():''}" onclick="editTodoDue(event,this,'${a.id}')">${dueStr}</span></div>`
+    : `<div class="todo-due-wrap"><span class="todo-due-text" style="color:#b8c1ca;" onclick="editTodoDue(event,this,'${a.id}')">Add due date</span></div>`;
+  const titleHref = a.url || '#';
+  return `<div class="todo-item" id="todo-${a.id}" data-aid="${a.id}" data-due-status="${st}" draggable="true" ondragstart="dragStart(event,'${a.id}')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondrop="dragDrop(event,'${a.id}')">
+      <div class="todo-main">
+        <input type="checkbox" class="todo-check" id="todo-check-${a.id}" onclick="handleTodoCheck(event,'${a.id}')">
+        <div class="todo-content">
+          <div class="todo-title" ondblclick="editTodoTitle(event,this,'${a.id}')"><a class="todo-title-link" href="${titleHref}" target="_blank" onclick="event.stopPropagation()">${a.name}</a></div>
+          <div class="todo-desc-area">
+            <div class="todo-desc-row">
+              <span class="desc-lines-icon">${SVG.lines}</span>
+              <textarea class="todo-desc-input" placeholder="Add description..." rows="1" oninput="autoResize(this);checkForSubtask(this,'${a.id}')"></textarea>
+            </div>
+            <div class="subtasks-inline">
+              <div class="subtasks-list" id="sub-${a.id}"></div>
+              <button class="add-subtask-btn" id="sub-btn-${a.id}" onclick="addSubtask('${a.id}')" style="display:none">${SVG.plus} Add subtask</button>
+            </div>
+          </div>
+          ${dueEl}
+          <div class="todo-chip-wrap">
+            <span class="course-chip" style="background:${a.course.color};" data-course-id="${a.course.id}" onclick="editTodoChip(event,this,'${a.id}')">${a.course.shortTitle}</span>
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button class="todo-trash" onclick="deleteTodoItem(event,'${a.id}')" title="Delete">${SVG.trash}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── CARD INTERACTIONS ────────────────────────────────────────────────────────
+function toggleCard(id) { document.getElementById('card-'+id).classList.toggle('collapsed'); }
+
+function toggleCardCheck(event, id) {
+  event.stopPropagation();
+  const checked = event.target.checked;
+  const row = document.getElementById('card-row-'+id);
+  if(row) row.classList.toggle('done', checked);
+  const todoItem = document.getElementById('todo-'+id);
+  if(!todoItem) return;
+  const todoCheck = document.getElementById('todo-check-'+id);
+  if(todoCheck && todoCheck.checked !== checked) { todoCheck.checked = checked; syncTodoMove(id, checked, todoItem); }
+}
+
+function editCardTitle(event, el, id) {
+  event.stopPropagation();
+  const original = el.textContent;
+  const input = document.createElement('input');
+  input.type='text'; input.value=original; input.className='inline-edit';
+  el.replaceWith(input); input.focus(); input.select();
+  const save = () => {
+    const val = input.value.trim()||original;
+    const div = document.createElement('div'); div.className='arow-name'; div.textContent=val;
+    div.ondblclick = e=>editCardTitle(e,div,id); input.replaceWith(div);
+    const tt = document.querySelector(`#todo-${id} .todo-title`); if(tt) tt.textContent=val;
+  };
+  input.onblur=save; input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){input.value=original;save();}};
+}
+
+// ─── TODO INTERACTIONS ────────────────────────────────────────────────────────
+function handleTodoCheck(event, id) {
+  event.stopPropagation();
+  const checked = event.target.checked;
+  const todoItem = document.getElementById('todo-'+id);
+  syncTodoMove(id, checked, todoItem);
+  const cardRow = document.getElementById('card-row-'+id);
+  const cardCheck = document.getElementById('card-check-'+id);
+  if(cardRow) cardRow.classList.toggle('done', checked);
+  if(cardCheck) cardCheck.checked = checked;
+}
+
+function syncTodoMove(id, checked, todoItem) {
+  if(checked) {
+    todoItem.classList.add('done-animate');
+    setTimeout(()=>{
+      todoItem.classList.remove('done-animate');
+      todoItem.classList.add('done-moved');
+      document.getElementById('completedList').appendChild(todoItem);
+      checkEmptySections();
+      updateCompletedCount(); updateProgressMeter();
+    }, 500);
+  } else {
+    todoItem.classList.remove('done-moved');
+    const status = todoItem.dataset.dueStatus || 'future';
+    if(status !== 'none') {
+      repositionTodoItem(id, status);
+    } else {
+      document.getElementById('todoActive').appendChild(todoItem);
+    }
+    updateCompletedCount(); updateProgressMeter();
+  }
+}
+
+function editTodoTitle(event, el, id) {
+  event.stopPropagation();
+  const link = el.querySelector('.todo-title-link');
+  const original = link ? link.textContent : el.textContent;
+  const input = document.createElement('input');
+  input.type='text'; input.value=original; input.className='title-edit-input';
+  el.replaceWith(input); input.focus(); input.select();
+  const save = () => {
+    const val = input.value.trim()||original;
+    const div = document.createElement('div'); div.className='todo-title';
+    const href = link ? link.href : '#';
+    div.innerHTML = `<a class="todo-title-link" href="${href}" target="_blank" onclick="event.stopPropagation()">${val}</a>`;
+    div.ondblclick=e=>editTodoTitle(e,div,id); input.replaceWith(div);
+    const an = document.querySelector(`#card-row-${id} .arow-name`); if(an) an.textContent=val;
+  };
+  input.onblur=save; input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){input.value=original;save();}};
+}
+
+function editTodoDue(event, el, id) {
+  event.stopPropagation();
+  const currentMs = el.dataset.dueMs ? parseInt(el.dataset.dueMs) : null;
+  const currentDate = currentMs ? new Date(currentMs) : null;
+  const input = document.createElement('input');
+  input.type='date'; input.className='due-date-input';
+  input.value = currentDate ? fmtDateVal(currentDate) : '';
+  el.replaceWith(input); input.focus();
+  const save = () => {
+    const val = input.value;
+    const newDue = val ? new Date(val + 'T' + (currentDate ? String(currentDate.getHours()).padStart(2,'0')+':'+String(currentDate.getMinutes()).padStart(2,'0') : '23:59') + ':00') : null;
+    const st = dueStatus(newDue);
+    const dueClass = st==='overdue'?'d-overdue':st==='today'?'d-today':'';
+    const span = document.createElement('span');
+    span.className = 'todo-due-text ' + dueClass;
+    span.dataset.dueMs = newDue ? newDue.getTime() : '';
+    span.textContent = newDue ? fmtDue(newDue) : 'Add due date';
+    if(!newDue) span.style.color = '#b8c1ca';
+    span.onclick = e => editTodoDue(e, span, id);
+    input.replaceWith(span);
+    const todoItem = document.getElementById('todo-'+id);
+    if(todoItem) {
+      todoItem.dataset.dueStatus = st;
+      if(todoItem.closest('#todoActive')) repositionTodoItem(id, st);
+    }
+    updateProgressMeter();
+  };
+  input.onblur = save;
+  input.onchange = save;
+}
+
+// ─── CHIP DROPDOWN ────────────────────────────────────────────────────────────
+function editTodoChip(event, el, id) {
+  event.stopPropagation();
+  document.querySelectorAll('.chip-dropdown').forEach(d => d.remove());
+  const currentCourseId = el.dataset.courseId;
+  const opts = [...courses];
+  const dropdown = document.createElement('div');
+  dropdown.className = 'chip-dropdown';
+  dropdown.innerHTML = opts.map(c =>
+    `<div class="chip-option${c.id===currentCourseId?' selected':''}" onclick="selectChipCourse(this,'${id}','${c.id}','${c.color}','${c.shortTitle.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+      <span class="chip-option-dot" style="background:${c.color}"></span>
+      <span>${c.shortTitle}</span>
+      ${c.id===currentCourseId ? '<span class="chip-option-check">✓</span>' : ''}
+    </div>`
+  ).join('') +
+  `<div class="chip-option-divider"></div>
+   <div class="chip-custom-input-wrap">
+     <input class="chip-custom-input" type="text" placeholder="Create custom label..." onkeydown="saveCustomChip(event,'${id}',this)" onclick="event.stopPropagation()">
+   </div>`;
+  document.body.appendChild(dropdown);
+  // Position fixed below the chip
+  const rect = el.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  if(spaceBelow < 220) {
+    dropdown.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+    dropdown.style.top = 'auto';
+  } else {
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+  }
+  dropdown.style.left = Math.min(rect.left, window.innerWidth - 185) + 'px';
+  setTimeout(() => {
+    const close = (e) => {
+      if(!dropdown.contains(e.target) && e.target !== el) {
+        dropdown.remove();
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }, 0);
+}
+
+function selectChipCourse(optEl, todoId, cid, color, title) {
+  const chip = document.querySelector(`#todo-${todoId} .course-chip`);
+  if(chip) { chip.style.background = color; chip.dataset.courseId = cid; chip.textContent = title; }
+  document.querySelectorAll('.chip-dropdown').forEach(d => d.remove());
+}
+
+function saveCustomChip(event, todoId, input) {
+  if(event.key === 'Enter') {
+    event.preventDefault();
+    const val = input.value.trim(); if(!val) return;
+    const chip = document.querySelector(`#todo-${todoId} .course-chip`);
+    if(chip) { chip.style.background = '#6c757d'; chip.dataset.courseId = 'custom'; chip.textContent = val; }
+    document.querySelectorAll('.chip-dropdown').forEach(d => d.remove());
+  }
+}
+
+function deleteTodoItem(event, id) {
+  event.stopPropagation();
+  const todoItem = document.getElementById('todo-'+id);
+  if(todoItem) todoItem.remove();
+  const cardRow = document.getElementById('card-row-'+id);
+  if(cardRow) cardRow.remove();
+  checkEmptySections();
+  updateCompletedCount(); updateProgressMeter();
+}
+
+
+function addSubtask(todoId) {
+  const list = document.getElementById('sub-'+todoId);
+  const row = document.createElement('div'); row.className='subtask-row';
+  row.innerHTML=`<input type="checkbox" class="subtask-check" onchange="this.closest('.subtask-row').classList.toggle('done',this.checked)"><input type="text" class="subtask-input" placeholder="Subtask name..."><button class="subtask-delete" onclick="this.closest('.subtask-row').remove()" title="Delete subtask"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>`;
+  list.appendChild(row); row.querySelector('.subtask-input').focus();
+  // Show the add subtask button once at least one subtask exists
+  const btn = document.getElementById('sub-btn-'+todoId);
+  if(btn) btn.style.display = 'flex';
+}
+
+function updateCompletedCount() {
+  document.getElementById('completedCount').textContent = document.getElementById('completedList').querySelectorAll('.todo-item').length;
+}
+
+function toggleCompleted() { document.getElementById('completedSection').classList.toggle('open'); }
+
+// ─── SECTION MANAGEMENT ───────────────────────────────────────────────────────
+function checkEmptySections() {
+  document.querySelectorAll('#todoActive .todo-section').forEach(sect => {
+    const body = sect.querySelector('.todo-section-body');
+    if(body && body.children.length === 0) sect.remove();
+  });
+}
+
+function repositionTodoItem(id, newStatus) {
+  const item = document.getElementById('todo-' + id);
+  if(!item) return;
+  item.remove();
+  let sect = document.getElementById('sect-' + newStatus);
+  if(!sect) {
+    const label = newStatus==='overdue' ? 'Overdue' : newStatus==='today' ? 'Due Today' : 'Upcoming';
+    sect = buildSection(newStatus, label, []);
+    const sOrder = ['overdue','today','future'];
+    const newIdx = sOrder.indexOf(newStatus);
+    const container = document.getElementById('todoActive');
+    let insertBefore = null;
+    for(let i = newIdx+1; i < sOrder.length; i++) {
+      const ex = document.getElementById('sect-' + sOrder[i]);
+      if(ex) { insertBefore = ex; break; }
+    }
+    if(insertBefore) container.insertBefore(sect, insertBefore);
+    else container.appendChild(sect);
+  }
+  document.getElementById('sect-body-' + newStatus).appendChild(item);
+  checkEmptySections();
+}
+
+// ─── DRAG TO REORDER ──────────────────────────────────────────────────────────
+let _dragId = null;
+let _dragEl = null;
+
+function dragStart(event, id) {
+  _dragId = id;
+  _dragEl = event.currentTarget;
+  event.currentTarget.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', id);
+}
+
+function dragEnd(event) {
+  event.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.todo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  _dragId = null; _dragEl = null;
+}
+
+function dragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  const target = event.currentTarget;
+  if(!_dragEl || target === _dragEl) return;
+  document.querySelectorAll('.todo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  target.classList.add('drag-over');
+}
+
+function dragDrop(event, targetId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const target = document.getElementById('todo-' + targetId);
+  if(!target || !_dragEl || target === _dragEl) return;
+  target.classList.remove('drag-over');
+  const targetBody = target.closest('.todo-section-body');
+  if(!targetBody) return;
+  const rect = target.getBoundingClientRect();
+  if(event.clientY < rect.top + rect.height / 2) {
+    targetBody.insertBefore(_dragEl, target);
+  } else {
+    targetBody.insertBefore(_dragEl, target.nextSibling);
+  }
+  // Sync status if dragged across sections
+  const newStatus = target.closest('.todo-section').dataset.status;
+  _dragEl.dataset.dueStatus = newStatus;
+  checkEmptySections();
+}
+
+// ─── SUBTASK SHORTCUT (type [] in description) ────────────────────────────────
+function checkForSubtask(textarea, id) {
+  const val = textarea.value;
+  const idx = val.indexOf('[]');
+  if(idx === -1) return;
+  textarea.value = val.slice(0, idx) + val.slice(idx + 2);
+  autoResize(textarea);
+  addSubtask(id);
+}
+
+// ─── INLINE NEW TASK ──────────────────────────────────────────────────────────
+function createInlineTask() {
+  const id  = 'custom_' + (++_customIdCounter);
+  const cm  = { id: 'custom', shortTitle: 'No course', color: '#b8c3cc' };
+  const tmp = document.createElement('div');
+  tmp.innerHTML = buildTodoItem({ id, name: '\u200b', due: null, course: cm });
+  const newItem = tmp.firstElementChild;
+
+  // Prepend to first section, or create a standalone section
+  const container = document.getElementById('todoActive');
+  const firstBody = container.querySelector('.todo-section-body');
+  if(firstBody) {
+    firstBody.insertBefore(newItem, firstBody.firstChild);
+  } else {
+    container.prepend(newItem);
+  }
+  if(!window._todoOrder) window._todoOrder = [];
+  window._todoOrder.unshift(id);
+  updateProgressMeter();
+
+  const titleEl = newItem.querySelector('.todo-title');
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'title-edit-input'; input.placeholder = 'Task name...';
+  titleEl.replaceWith(input); input.focus();
+
+  const commit = () => {
+    const val = input.value.trim();
+    if(!val) {
+      newItem.remove();
+      const idx2 = (window._todoOrder||[]).indexOf(id);
+      if(idx2 > -1) window._todoOrder.splice(idx2, 1);
+      checkEmptySections(); updateProgressMeter(); return;
+    }
+    const div = document.createElement('div'); div.className = 'todo-title';
+    div.innerHTML = `<a class="todo-title-link" href="#" onclick="event.stopPropagation()">${val}</a>`;
+    div.ondblclick = e => editTodoTitle(e, div, id);
+    input.replaceWith(div);
+  };
+  input.onblur = commit;
+  input.onkeydown = e => {
+    if(e.key === 'Enter')  { e.preventDefault(); commit(); }
+    if(e.key === 'Escape') { newItem.remove(); checkEmptySections(); }
+  };
+}
+
+// ─── EXPORT CALENDAR ──────────────────────────────────────────────────────────
+function toggleExportDropdown(event) {
+  event.stopPropagation();
+  const wrap = document.getElementById('exportWrap');
+  const isOpen = wrap.classList.contains('open');
+  wrap.classList.toggle('open', !isOpen);
+  if(!isOpen) {
+    setTimeout(() => {
+      const close = (e) => {
+        if(!wrap.contains(e.target)) {
+          wrap.classList.remove('open');
+          document.removeEventListener('click', close);
+        }
+      };
+      document.addEventListener('click', close);
+    }, 0);
+  }
+}
+
+function exportCalendar(target) {
+  document.getElementById('exportWrap').classList.remove('open');
+  // Collect all active todo items with due dates
+  const items = [];
+  document.querySelectorAll('#todoActive .todo-item').forEach(el => {
+    const titleEl = el.querySelector('.todo-title-link');
+    const dueSpan = el.querySelector('.todo-due-text[data-due-ms]');
+    if(!titleEl || !dueSpan || !dueSpan.dataset.dueMs) return;
+    items.push({ title: titleEl.textContent, dueMs: parseInt(dueSpan.dataset.dueMs) });
+  });
+  if(target === 'google') {
+    items.forEach(item => {
+      const d = new Date(item.dueMs);
+      const fmt = t => t.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(item.title)}&dates=${fmt(d)}/${fmt(new Date(d.getTime()+3600000))}`;
+      window.open(url, '_blank');
+    });
+  } else if(target === 'apple') {
+    // Generate .ics content
+    const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//bCourses//EN'];
+    items.forEach(item => {
+      const d = new Date(item.dueMs);
+      const fmt = t => t.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+      ics.push('BEGIN:VEVENT',`DTSTART:${fmt(d)}`,`DTEND:${fmt(new Date(d.getTime()+3600000))}`,`SUMMARY:${item.title}`,'END:VEVENT');
+    });
+    ics.push('END:VCALENDAR');
+    const blob = new Blob([ics.join('\r\n')], {type:'text/calendar'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'bcourses-tasks.ics'; a.click();
+  } else if(target === 'notion') {
+    alert('Notion Calendar export: copy your tasks and paste into Notion Calendar. (Notion API integration requires a backend.)');
+  }
+}
+
+// ─── TOGGLE ALL ───────────────────────────────────────────────────────────────
+function toggleAllAssignments() {
+  const btn=document.getElementById('toggleAllBtn');
+  const allOpen=btn.classList.contains('open');
+  document.querySelectorAll('.card-container').forEach(card=>{if(allOpen)card.classList.add('collapsed');else card.classList.remove('collapsed');});
+  btn.classList.toggle('open', !allOpen);
+  btn.textContent=allOpen?'Show assignments':'Close assignments';
+}
+
+function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderCourseGrid();
+renderTodoList();
+document.querySelectorAll('.card-container').forEach(card=>card.classList.add('collapsed'));
+</script>
+</body>
+</html>
